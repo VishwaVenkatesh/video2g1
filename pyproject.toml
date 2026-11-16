@@ -1,0 +1,16 @@
+[project]
+name = "video2g1"
+version = "0.1.0"
+description = "Human video -> Unitree G1 motion -> tracking policy -> language-commanded skills"
+requires-python = ">=3.10"
+dependencies = ["mujoco>=3.2", "numpy", "imageio", "imageio-ffmpeg"]
+
+[project.optional-dependencies]
+video = ["mediapipe", "opencv-python"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["video2g1"]

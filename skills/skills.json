@@ -1,0 +1,5 @@
+{
+  "wave":  {"motion": "outputs/wave.csv",  "description": "wave hello with the hand, greet a person"},
+  "squat": {"motion": "outputs/squat.csv", "description": "squat down, crouch, bend the knees"},
+  "walk":  {"motion": "outputs/walk.csv",  "description": "walk forward, step ahead, move"}
+}

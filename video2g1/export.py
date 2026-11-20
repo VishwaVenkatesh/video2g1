@@ -67,3 +67,26 @@ def view(model_path: str, qpos: np.ndarray, fps: float):
                 time.sleep(1.0 / fps)
                 if not v.is_running():
                     break
+
+
+def side_by_side(video_path: str, robot_mp4: str, out_path: str, start: float = 0.0):
+    """Source video (left) next to the robot render (right), same height, robot's frame rate."""
+    import cv2
+    import imageio
+
+    robot = imageio.mimread(robot_mp4, memtest=False)
+    cap = cv2.VideoCapture(video_path)
+    cap.set(cv2.CAP_PROP_POS_MSEC, 1000 * start)
+    h = robot[0].shape[0]
+    frames = []
+    for r in robot:
+        ok, bgr = cap.read()
+        if not ok:
+            break
+        img = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        w = int(round(img.shape[1] * h / img.shape[0])) // 2 * 2
+        frames.append(np.hstack([cv2.resize(img, (w, h)), r]))
+    cap.release()
+    fps = imageio.v3.immeta(robot_mp4).get("fps", 30)
+    imageio.mimsave(out_path, frames, fps=fps, macro_block_size=1)
+    return out_path

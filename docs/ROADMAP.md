@@ -6,11 +6,14 @@ Each milestone is a release and a post (r/robotics, r/reinforcementlearning, Lin
 
 - [x] Retargeting IK for the 29-DoF G1 (joint limits, flat feet, stance-foot anchoring)
 - [x] Unitree CSV export, MuJoCo render, synthetic test motion
-- [ ] **Run the video front end on 3 real clips** (wave, squat, walk) and fix what breaks  ← next
+- [x] Video front end runs on a real clip (squat). Found: camera cuts, side views, heading wobble, foot slide
+- [x] `--in-place` (feet pinned in the IK), `--smooth`, `--start/--end`, camera-cut warning
+- [x] Side-by-side video output and per-clip quality numbers
+- [ ] Run wave and walk clips and fix what breaks  ← next
 - [ ] Use MediaPipe heel/toe landmarks for foot yaw; hand landmarks for wrist orientation
 - [ ] Live webcam mode (mirror yourself on the G1 in real time). This is the demo GIF for post #1
 - [ ] Optional high-quality backend: GVHMR for pose + GMR for retargeting, same CSV out
-- [ ] Quality metrics per clip: foot slide, ground penetration, joint-speed peaks, self-collision
+- [ ] Quality metrics: add ground penetration and self-collision
 
 **Post #1:** "I built a tool that turns any video of a human into Unitree G1 motion, on a laptop CPU."
 

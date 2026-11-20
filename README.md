@@ -33,12 +33,25 @@ pip install -e ".[video]"
 python -m video2g1.cli run my_video.mp4 --model $G1 --out outputs/my_clip --view
 ```
 
+Useful flags for `run`:
+
+| Flag | Use it for |
+|---|---|
+| `--in-place` | Motions where the feet stay put (squat, wave, arm moves): feet are pinned to the floor, heading is locked |
+| `--smooth 0.1` | Shaky clips (default 0.05 s of keypoint smoothing) |
+| `--start 5.2 --end 10.1` | Keep one part of a clip; the tool warns if it finds camera cuts |
+| `--view` | Open the interactive MuJoCo viewer |
+
 On a headless machine add `MUJOCO_GL=egl`. Each run writes:
 
 - `*.csv`: 36 columns, no header: root `x y z`, root quaternion `qx qy qz qw`, 29 joint angles.
   This is Unitree's convention, the format the LAFAN1 retargeted dataset, BeyondMimic and mjlab use.
 - `*.npz`: MuJoCo `qpos` (quaternion `wxyz`), fps and joint names.
 - `*.mp4` / `*.gif`: a render of the G1 performing the motion.
+- `*_side_by_side.mp4`: the source video next to the G1 (video input only).
+
+Each run also prints quality numbers: foot slide while planted, pelvis path, heading range,
+joint jitter and peak joint speed (see `video2g1/quality.py`).
 
 ## How the retargeting works
 

@@ -14,15 +14,38 @@ trains a policy so the robot performs the movement itself, with motors and physi
 puppet. The long-term goal is a library of skills learned from video that you can call in plain
 language ("do a squat").
 
-## The three phases
+## The full plan
 
-video → 3D body keypoints (MediaPipe) → G1 joint angles (IK retargeting) → motion-tracking policy (mjlab, PPO) → skills called by language
+video → 3D body keypoints → G1 joint angles → motion-tracking policy → skills called by language
 
-| Phase | What it does | Status |
-|---|---|---|
-| **1. Video → robot motion** | Pose estimation from a single video (MediaPipe, CPU only), retargeting to the G1 with joint limits, flat feet, planted-foot IK and stance-foot anchoring, export to Unitree CSV | **Working** on real video (squat, wave); walking toward the camera is weak (see limitations) |
-| **2. Robot motion → policy** | Train an RL motion-tracking policy on the retargeted clips in mjlab, then a single multi-clip tracker | **First policy trained** (squat, single clip); multi-clip tracker next |
-| **3. Language → skill** | A language model picks and sequences skills; the tracker executes them | Stub (`video2g1/commander.py`, keyword matching only) |
+✅ done · ⬜ planned. Details for each step are in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+### Phase 1: Video → robot motion
+- ✅ Pose estimation from a single video on a laptop CPU (MediaPipe)
+- ✅ Retargeting to the 29-joint G1: joint limits, flat feet, planted-foot IK, stance-foot anchoring
+- ✅ Modes for in-place motions (`--in-place`) and waist-up videos (`--upper-body`)
+- ✅ Quality checks per clip: foot sliding, jitter, camera cuts; side-by-side video output
+- ⬜ High-quality pose backend (GVHMR + GMR) for walking and side views
+- ⬜ Foot and wrist orientation from heel, toe and hand landmarks
+- ⬜ Live webcam mode: move in front of your laptop, the G1 copies you
+
+### Phase 2: Robot motion → trained policy
+- ✅ Single-clip tracking policy in mjlab (squat), trained on a 6 GB laptop GPU
+- ⬜ One policy for several motions (squat + wave), then 20+ clips (own videos + LAFAN1)
+- ⬜ Sim-to-sim check: run the MuJoCo-trained policy in Isaac Lab
+- ⬜ Deployment on a real Unitree G1
+
+### Phase 3: Language → skills
+- ⬜ Skill library: each trained motion gets a name and a description
+- ⬜ A language model turns "wave, then squat" into a skill sequence
+- ⬜ Smooth transitions between skills
+- ⬜ A vision-language model looks at the scene and picks the next skill
+- ⬜ Stretch: a text-to-video model generates the human video, and the pipeline learns a brand-new skill
+
+### Research question
+How much does pose-estimation quality matter? Policies trained from cheap laptop pose (MediaPipe)
+are compared with policies trained from a high-quality model (GVHMR) on the same clips, measuring
+tracking error and success rate.
 
 ## Quick start
 

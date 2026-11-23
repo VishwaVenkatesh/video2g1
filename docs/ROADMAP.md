@@ -12,9 +12,9 @@ Each milestone is a release and a post (r/robotics, r/reinforcementlearning, Lin
 - [x] Wave clip: `--upper-body` mode for waist-up videos (legs held standing; joint-speed spike 12 → 2 rad/s)
 - [x] Walk clip: turning is captured, but steps toward the camera are weak (single-camera depth).
       Fix = high-quality backend below, not more MediaPipe patches
-- [x] First tracking policy trained in mjlab on the squat clip (RTX 4050 laptop, 1024 envs, 3000 iterations)
 - [x] Three-panel showcase (human | retargeted | trained policy) in the README
-- [ ] Publish on GitHub, post the GIF  ← next
+- [x] Published on GitHub
+- [ ] Post the GIF (LinkedIn, Reddit)  ← next
 - [ ] Use MediaPipe heel/toe landmarks for foot yaw; hand landmarks for wrist orientation
 - [ ] Live webcam mode (mirror yourself on the G1 in real time). This is the demo GIF for post #1
 - [ ] Optional high-quality backend: GVHMR for pose + GMR for retargeting, same CSV out
@@ -26,14 +26,15 @@ Each milestone is a release and a post (r/robotics, r/reinforcementlearning, Lin
 
 Goal: the robot physically performs the clip in simulation, with balance, not just kinematic playback.
 
-- [ ] Train a single-clip tracker with mjlab (task `Mjlab-Tracking-Flat-Unitree-G1`). mjlab's
-      `csv_to_npz` script takes the CSV this repo writes (set `--input-fps` to the clip's fps).
-      Docs: https://mujocolab.github.io/mjlab/main/source/training/motion_imitation.html
+- [x] Single-clip tracker trained with mjlab on the squat clip (task `Mjlab-Tracking-Flat-Unitree-G1`,
+      RTX 4050 laptop, 1024 envs, 3000 iterations). Commands in the README.
+- [ ] Two-motion tracker (squat + wave)  ← next technical step
 - [ ] Reproduce on an MJX backend (reuse the thesis PPO setup) and compare
 - [ ] Sim-to-sim check: evaluate the MuJoCo-trained tracker in Isaac Lab (thesis tooling)
 - [ ] Multi-clip tracker: one policy conditioned on the reference motion, trained on 20+ clips
       (own videos + the public LAFAN1 retargeted set)
 - [ ] Report: success rate and tracking error per clip, video-sourced vs mocap-sourced references
+- [ ] Real G1 deployment (needs access to a robot)
 
 **Post #2:** "From a phone video to a humanoid doing the motion with a learned controller."
 
@@ -54,4 +55,4 @@ Goal: type "wave, then walk forward and squat" and watch the G1 do it.
 ## Rules for the project
 
 - Every claim in the README is backed by a command someone can run.
-- State clearly what is simulation only. Nothing here has run on a real G1.
+- State clearly what is simulation only. Nothing here has run on a real G1 yet.

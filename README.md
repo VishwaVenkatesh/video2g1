@@ -1,16 +1,33 @@
 # video2g1
 
-**Human video → Unitree G1 motion → tracking policy → language-commanded skills.**
-
-There will never be enough robot data, but there are billions of hours of video of humans moving.
-This project is an open, lightweight pipeline that turns any human video into a skill a humanoid can
-perform, and then lets you ask for that skill in plain language.
+### From a phone video to a humanoid robot skill
 
 ![squat showcase](media/squat_showcase.gif)
 
-*A phone video of a squat (1) is retargeted to the 29-DoF Unitree G1 (2), then a reinforcement-learning
-policy trained in mjlab performs it with full physics, balancing on its own motors (3). The green ghost
-is the reference motion. Trained on a laptop RTX 4050 (6 GB).*
+*(1) A video of a person doing a squat. (2) The motion retargeted to the 29-joint Unitree G1.
+(3) A reinforcement-learning policy performing it with full physics: the robot balances on its own
+motors. The green ghost is the reference motion.*
+
+**What this is.** Robots learn from data, and robot data is scarce. Videos of people moving are
+everywhere. video2g1 takes an ordinary video of a person, turns it into motion for the Unitree G1, and
+trains a policy so the robot performs the movement itself, with motors and physics rather than as a
+puppet. The long-term goal is a library of skills learned from video that you can call in plain
+language ("do a squat").
+
+**What works today**
+- **Video → robot motion** on a laptop CPU: pose estimation, retargeting with planted feet and joint
+  limits, modes for in-place and waist-up clips, and quality checks (foot sliding, jitter, camera cuts)
+- **Robot motion → trained policy:** the squat above was trained in [mjlab](https://github.com/mujocolab/mjlab)
+  on a 6 GB laptop GPU (RTX 4050)
+
+**How it works:** video → 3D body keypoints (MediaPipe) → G1 joint angles (IK retargeting) →
+motion-tracking policy (mjlab, PPO)
+
+**Honest limitations:** simulation only so far, one trained clip. A single camera judges depth poorly,
+so side views and walking toward the camera retarget badly.
+
+**Next:** one policy for many motions, a stronger pose model for walking (GVHMR), the real robot, and
+language commands.
 
 ![demo](media/demo.gif)
 

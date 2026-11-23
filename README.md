@@ -6,7 +6,7 @@
 
 *(1) A video of a person doing a squat. (2) The motion retargeted to the 29-joint Unitree G1.
 (3) A reinforcement-learning policy performing it with full physics: the robot balances on its own
-motors. The green ghost is the reference motion.*
+motors. The green ghost is the reference motion. Trained in mjlab on a 6 GB laptop GPU (RTX 4050).*
 
 **What this is.** Robots learn from data, and robot data is scarce. Videos of people moving are
 everywhere. video2g1 takes an ordinary video of a person, turns it into motion for the Unitree G1, and
@@ -14,26 +14,9 @@ trains a policy so the robot performs the movement itself, with motors and physi
 puppet. The long-term goal is a library of skills learned from video that you can call in plain
 language ("do a squat").
 
-**What works today**
-- **Video → robot motion** on a laptop CPU: pose estimation, retargeting with planted feet and joint
-  limits, modes for in-place and waist-up clips, and quality checks (foot sliding, jitter, camera cuts)
-- **Robot motion → trained policy:** the squat above was trained in [mjlab](https://github.com/mujocolab/mjlab)
-  on a 6 GB laptop GPU (RTX 4050)
-
-**How it works:** video → 3D body keypoints (MediaPipe) → G1 joint angles (IK retargeting) →
-motion-tracking policy (mjlab, PPO)
-
-**Honest limitations:** simulation only so far, one trained clip. A single camera judges depth poorly,
-so side views and walking toward the camera retarget badly.
-
-**Next:** one policy for many motions, a stronger pose model for walking (GVHMR), the real robot, and
-language commands.
-
-![demo](media/demo.gif)
-
-*Synthetic test motion (wave → squat → walk) retargeted to the G1.*
-
 ## The three phases
+
+video → 3D body keypoints (MediaPipe) → G1 joint angles (IK retargeting) → motion-tracking policy (mjlab, PPO) → skills called by language
 
 | Phase | What it does | Status |
 |---|---|---|
@@ -48,13 +31,15 @@ pip install -e .            # core: mujoco + numpy
 ./scripts/get_g1.sh         # fetches the G1 model from MuJoCo Menagerie
 G1=third_party/mujoco_menagerie/unitree_g1/scene.xml
 
-# 1) No video needed: synthetic human -> G1
+# 1) No video needed: synthetic human -> G1 (wave -> squat -> walk, shown below)
 python -m video2g1.cli demo --model $G1 --out outputs/demo
 
 # 2) Your own video (person fully visible, one person, static camera works best)
 pip install -e ".[video]"
 python -m video2g1.cli run my_video.mp4 --model $G1 --out outputs/my_clip --view
 ```
+
+![demo](media/demo.gif)
 
 Useful flags for `run`:
 
@@ -103,15 +88,16 @@ The converter also uploads the motion to a Weights & Biases registry, so a W&B l
    limits, a smoothness term and a term that keeps the soles parallel to the floor.
 4. **Stance-foot anchoring.** MediaPipe gives a hip-centred pose with no global position. The lower
    foot is assumed to be planted, which recovers root height and forward travel and prevents that
-   foot from sliding.
+   foot from sliding. With `--in-place`, both feet are pinned inside the IK and the pelvis moves instead.
 
 ## Known limitations (v0.1)
 
 - The retargeter itself is kinematic: balance and torque limits are handled by the tracking policy (phase 2).
 - One camera gives poor depth: side views and walking toward the camera retarget badly. A
   world-grounded pose model (GVHMR) is planned for these cases.
+- Results are in simulation only so far, with one trained clip (squat).
 - No jumps or flight phases (one foot is always assumed to be on the ground).
-- Single-camera depth from MediaPipe is noisy; wrists and feet have no orientation tracking yet.
+- Wrists and feet have no orientation tracking yet.
 - No self-collision avoidance.
 
 ## Related work

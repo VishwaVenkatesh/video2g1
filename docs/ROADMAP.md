@@ -9,7 +9,12 @@ Each milestone is a release and a post (r/robotics, r/reinforcementlearning, Lin
 - [x] Video front end runs on a real clip (squat). Found: camera cuts, side views, heading wobble, foot slide
 - [x] `--in-place` (feet pinned in the IK), `--smooth`, `--start/--end`, camera-cut warning
 - [x] Side-by-side video output and per-clip quality numbers
-- [ ] Run wave and walk clips and fix what breaks  ← next
+- [x] Wave clip: `--upper-body` mode for waist-up videos (legs held standing; joint-speed spike 12 → 2 rad/s)
+- [x] Walk clip: turning is captured, but steps toward the camera are weak (single-camera depth).
+      Fix = high-quality backend below, not more MediaPipe patches
+- [x] First tracking policy trained in mjlab on the squat clip (RTX 4050 laptop, 1024 envs, 3000 iterations)
+- [x] Three-panel showcase (human | retargeted | trained policy) in the README
+- [ ] Publish on GitHub, post the GIF  ← next
 - [ ] Use MediaPipe heel/toe landmarks for foot yaw; hand landmarks for wrist orientation
 - [ ] Live webcam mode (mirror yourself on the G1 in real time). This is the demo GIF for post #1
 - [ ] Optional high-quality backend: GVHMR for pose + GMR for retargeting, same CSV out

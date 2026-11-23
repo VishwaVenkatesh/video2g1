@@ -6,16 +6,22 @@ There will never be enough robot data, but there are billions of hours of video 
 This project is an open, lightweight pipeline that turns any human video into a skill a humanoid can
 perform, and then lets you ask for that skill in plain language.
 
+![squat showcase](media/squat_showcase.gif)
+
+*A phone video of a squat (1) is retargeted to the 29-DoF Unitree G1 (2), then a reinforcement-learning
+policy trained in mjlab performs it with full physics, balancing on its own motors (3). The green ghost
+is the reference motion. Trained on a laptop RTX 4050 (6 GB).*
+
 ![demo](media/demo.gif)
 
-*Phase 1 output: a human motion (wave → squat → walk) retargeted to the 29-DoF Unitree G1 in MuJoCo.*
+*Synthetic test motion (wave → squat → walk) retargeted to the G1.*
 
 ## The three phases
 
 | Phase | What it does | Status |
 |---|---|---|
-| **1. Video → robot motion** | Pose estimation from a single video (MediaPipe, CPU only), retargeting to the G1 with joint limits, flat feet and stance-foot anchoring, export to Unitree CSV | **Working** (retargeting tested on synthetic motion; video front end written but not yet run end to end) |
-| **2. Robot motion → policy** | Train an RL motion-tracking policy on the retargeted clips (mjlab / BeyondMimic take the CSV directly), then a single multi-clip tracker | Not started (see [docs/ROADMAP.md](docs/ROADMAP.md)) |
+| **1. Video → robot motion** | Pose estimation from a single video (MediaPipe, CPU only), retargeting to the G1 with joint limits, flat feet, planted-foot IK and stance-foot anchoring, export to Unitree CSV | **Working** on real video (squat, wave); walking toward the camera is weak (see limitations) |
+| **2. Robot motion → policy** | Train an RL motion-tracking policy on the retargeted clips in mjlab, then a single multi-clip tracker | **First policy trained** (squat, single clip); multi-clip tracker next |
 | **3. Language → skill** | A language model picks and sequences skills; the tracker executes them | Stub (`video2g1/commander.py`, keyword matching only) |
 
 ## Quick start
@@ -38,6 +44,7 @@ Useful flags for `run`:
 | Flag | Use it for |
 |---|---|
 | `--in-place` | Motions where the feet stay put (squat, wave, arm moves): feet are pinned to the floor, heading is locked |
+| `--upper-body` | Waist-up videos: legs stay standing, only arms and torso are copied |
 | `--smooth 0.1` | Shaky clips (default 0.05 s of keypoint smoothing) |
 | `--start 5.2 --end 10.1` | Keep one part of a clip; the tool warns if it finds camera cuts |
 | `--view` | Open the interactive MuJoCo viewer |
@@ -53,6 +60,23 @@ On a headless machine add `MUJOCO_GL=egl`. Each run writes:
 Each run also prints quality numbers: foot slide while planted, pelvis path, heading range,
 joint jitter and peak joint speed (see `video2g1/quality.py`).
 
+## Train a tracking policy (phase 2)
+
+Uses [mjlab](https://github.com/mujocolab/mjlab) (needs an NVIDIA GPU; a 6 GB laptop GPU works with 1024 environments).
+
+```bash
+cd mjlab
+MUJOCO_GL=egl uv run -m mjlab.scripts.csv_to_npz --input-file /path/to/outputs/squat.csv \
+    --output-name squat --input-fps 25 --output-fps 50 --render True   # use your clip's fps
+cp /tmp/motion.npz motions/squat.npz
+uv run train Mjlab-Tracking-Flat-Unitree-G1 --env.commands.motion.motion-file motions/squat.npz \
+    --env.scene.num-envs 1024 --agent.max-iterations 3000
+uv run play Mjlab-Tracking-Flat-Unitree-G1 --checkpoint-file latest --motion-file motions/squat.npz \
+    --video True --video-length 300 --video-height 720 --video-width 1280
+```
+
+The converter also uploads the motion to a Weights & Biases registry, so a W&B login is needed.
+
 ## How the retargeting works
 
 1. **Root orientation** comes from the human hips and torso.
@@ -66,7 +90,9 @@ joint jitter and peak joint speed (see `video2g1/quality.py`).
 
 ## Known limitations (v0.1)
 
-- Kinematic only: nothing checks balance or torque limits. That is the tracking policy's job (phase 2).
+- The retargeter itself is kinematic: balance and torque limits are handled by the tracking policy (phase 2).
+- One camera gives poor depth: side views and walking toward the camera retarget badly. A
+  world-grounded pose model (GVHMR) is planned for these cases.
 - No jumps or flight phases (one foot is always assumed to be on the ground).
 - Single-camera depth from MediaPipe is noisy; wrists and feet have no orientation tracking yet.
 - No self-collision avoidance.

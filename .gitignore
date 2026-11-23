@@ -2,3 +2,7 @@ outputs/
 third_party/
 __pycache__/
 *.egg-info/
+clips/
+.venv/
+wandb/
+*.task

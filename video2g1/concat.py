@@ -5,6 +5,9 @@ one policy learn several skills: training samples random moments of the stitched
 
 Each clip is resampled to a common frame rate, then moved so it starts where the previous one ended
 (same position on the floor, same heading), and joined to it by a short blend.
+
+Clips made with `--upper-body` have no real leg motion. They take over the previous clip's final
+stance (root and legs), so the feet stay planted through the join instead of sliding.
 """
 from __future__ import annotations
 
@@ -70,6 +73,9 @@ def concat(clips: list[tuple[np.ndarray, float]], fps: float = 30.0, blend_s: fl
     out = resample(clips[0][0], clips[0][1], fps)
     for q, f in clips[1:]:
         nxt = _place(resample(q, f, fps), out[-1, :2], _yaw(out[-1, 3:7]))
+        if np.ptp(nxt[:, 7:19], axis=0).max() < 1e-6:      # upper-body clip: keep the previous stance
+            nxt[:, :7] = out[-1, :7]
+            nxt[:, 7:19] = out[-1, 7:19]
         a, b = out[-1], nxt[0]
         t = np.linspace(0, 1, nb + 2)[1:-1]
         s = 0.5 - 0.5 * np.cos(np.pi * t)                  # ease in and out

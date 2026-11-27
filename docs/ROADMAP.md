@@ -29,7 +29,10 @@ Goal: the robot physically performs the clip in simulation, with balance, not ju
 - [x] Single-clip tracker trained with mjlab on the squat clip (task `Mjlab-Tracking-Flat-Unitree-G1`,
       RTX 4050 laptop, 1024 envs, 3000 iterations). Commands in the README.
 - [x] `concat` command: stitch clips into one motion (resample, align, 1 s blend). Squat + wave = 21.2 s
-- [ ] Two-motion tracker (squat + wave) trained in mjlab  ← next
+- [x] First two-motion run (40 min, 4000 iterations): robot survives ~98% of episodes, but steps
+      0.5 m sideways at the squat→wave join because the reference slid the feet to a narrower stance
+- [x] Fix: waist-up clips inherit the previous stance (feet move 0.000 m through the join)
+- [ ] Retrain squat + wave with the fixed clip  ← next
 - [ ] Reproduce on an MJX backend (reuse the thesis PPO setup) and compare
 - [ ] Sim-to-sim check: evaluate the MuJoCo-trained tracker in Isaac Lab (thesis tooling)
 - [ ] Multi-clip tracker: one policy conditioned on the reference motion, trained on 20+ clips

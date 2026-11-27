@@ -31,7 +31,8 @@ video → 3D body keypoints → G1 joint angles → motion-tracking policy → s
 
 ### Phase 2: Robot motion → trained policy
 - ✅ Single-clip tracking policy in mjlab (squat), trained on a 6 GB laptop GPU
-- ⬜ One policy for several motions (squat + wave), then 20+ clips (own videos + LAFAN1)
+- ✅ One policy for two motions (squat → wave), stitched with `concat`, trained in 43 minutes
+- ⬜ One policy for 20+ clips (own videos + LAFAN1)
 - ⬜ Sim-to-sim check: run the MuJoCo-trained policy in Isaac Lab
 - ⬜ Deployment on a real Unitree G1
 

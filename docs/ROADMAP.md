@@ -32,7 +32,9 @@ Goal: the robot physically performs the clip in simulation, with balance, not ju
 - [x] First two-motion run (40 min, 4000 iterations): robot survives ~98% of episodes, but steps
       0.5 m sideways at the squat→wave join because the reference slid the feet to a narrower stance
 - [x] Fix: waist-up clips inherit the previous stance (feet move 0.000 m through the join)
-- [ ] Retrain squat + wave with the fixed clip  ← next
+- [x] Retrained squat + wave with the fixed clip (4000 iterations, 43 min): the robot stays on the
+      reference through the whole squat → wave, no step at the join
+- [ ] Wrist rotation from hand landmarks, so the hand actually waves  ← next
 - [ ] Reproduce on an MJX backend (reuse the thesis PPO setup) and compare
 - [ ] Sim-to-sim check: evaluate the MuJoCo-trained tracker in Isaac Lab (thesis tooling)
 - [ ] Multi-clip tracker: one policy conditioned on the reference motion, trained on 20+ clips

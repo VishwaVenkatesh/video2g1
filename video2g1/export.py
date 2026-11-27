@@ -33,7 +33,7 @@ def render(model_path: str, qpos: np.ndarray, fps: float, out_path: str,
     d = mujoco.MjData(m)
     renderer = mujoco.Renderer(m, height, width)
     cam = mujoco.MjvCamera()
-    cam.distance, cam.azimuth, cam.elevation = 3.0, 140.0, -12.0
+    cam.distance, cam.azimuth, cam.elevation = 2.6, 180.0, -8.0     # front view, like the source video
     frames = []
     for q in qpos:
         d.qpos[:] = q

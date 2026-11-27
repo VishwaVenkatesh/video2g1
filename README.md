@@ -102,6 +102,14 @@ uv run play Mjlab-Tracking-Flat-Unitree-G1 --checkpoint-file latest --motion-fil
 
 The converter also uploads the motion to a Weights & Biases registry, so a W&B login is needed.
 
+**Several motions, one policy.** mjlab trains on one motion file, so stitch clips first. Each clip is
+resampled to a common frame rate, placed where the previous one ends and joined by a 1 s blend:
+
+```bash
+python -m video2g1.cli concat outputs/squat.npz outputs/wave.npz --model $G1 --out outputs/squat_wave
+# then convert outputs/squat_wave.csv with --input-fps 30 and train as above
+```
+
 ## How the retargeting works
 
 1. **Root orientation** comes from the human hips and torso.

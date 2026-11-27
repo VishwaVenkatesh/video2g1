@@ -103,7 +103,8 @@ class G1Retargeter:
         z = np.cross(x, y)
         return np.stack([x, y, z], 1), torso
 
-    def solve_frame(self, K: dict, q_prev: np.ndarray, iters: int | None = None, pins: dict | None = None):
+    def solve_frame(self, K: dict, q_prev: np.ndarray, iters: int | None = None, pins: dict | None = None,
+                    upper_body: bool = False):
         """pins: optional {"l_an"/"r_an": world xyz}. Those ankles are held at fixed world points
         and the root is free to translate, so a planted foot cannot slide."""
         m, d = self.m, self.d
@@ -129,6 +130,9 @@ class G1Retargeter:
             tgt[s + "_kn"] = hip + self.thigh * _unit(K[s + "_kn"] - K[s + "_hip"])
             tgt[s + "_an"] = tgt[s + "_kn"] + self.shank * _unit(K[s + "_an"] - K[s + "_kn"])
         weights = {"sh": 0.5, "el": 1.0, "wr": 1.0, "kn": 1.0, "an": 1.0}
+        if upper_body:                                   # legs not in the video: hold them standing
+            weights.update(kn=0.0, an=0.0)
+            d.qpos[7:19] = self.q0[7:19]
         pins = pins or {}
         offs = {k: p - root for k, p in tgt.items()}         # targets move with the root
         cols = np.r_[0:3, 6:m.nv] if pins else np.r_[6:m.nv]   # free root translation only if pinned
@@ -170,17 +174,20 @@ class G1Retargeter:
             if pins:
                 d.qpos[:3] = x[:3]
             d.qpos[7:] = np.clip(x[-29:], self.lo, self.hi)
+            if upper_body:
+                d.qpos[7:19] = self.q0[7:19]
 
         mujoco.mj_kinematics(m, d)
         root = d.xpos[self.pelvis].copy()
-        err = np.mean([np.linalg.norm(root + o - d.xpos[self.B[k]]) for k, o in offs.items()])
+        err = np.mean([np.linalg.norm(root + o - d.xpos[self.B[k]]) for k, o in offs.items()
+                       if weights[k[2:]] > 0])
         feet = {s: d.xpos[self.B[s + "_an"]] - root for s in ("l", "r")}
         return d.qpos.copy(), feet, float(err)
 
     # ------------------------------------------------------------------ whole clip
     def retarget(self, landmarks: np.ndarray, fps: float, smooth_sigma_s: float = 0.05,
                  heading_sigma_s: float = 0.25, anchor_feet: bool = True, in_place: bool = False,
-                 verbose: bool = True):
+                 upper_body: bool = False, verbose: bool = True):
         """landmarks: (T, 33, 3) MediaPipe world landmarks. Returns (qpos (T,36), info dict).
 
         smooth_sigma_s : Gaussian smoothing of all keypoints (seconds).
@@ -188,10 +195,18 @@ class G1Retargeter:
                          Single-camera depth makes it the noisiest signal, so it gets more.
         anchor_feet    : recover forward travel from the planted foot (walking clips).
         in_place       : lock the heading and keep the feet centred (squat, wave, arm motions).
+        upper_body     : the legs are not in the video (waist-up shot). Legs stay in the standing
+                         pose, the pelvis stays upright, heading comes from the shoulders.
         """
         kp = np.asarray(landmarks, dtype=float) @ MP_TO_WORLD.T
         kp = smooth(kp, smooth_sigma_s * fps)
         T = len(kp)
+        if upper_body:                                   # invented hips: rebuild them under the shoulders
+            sh = kp[:, [MP["l_sh"], MP["r_sh"]]]
+            kp[:, MP["l_hip"]] = sh[:, 0] - (0, 0, 0.5)
+            kp[:, MP["r_hip"]] = sh[:, 1] - (0, 0, 0.5)
+            kp[:, [MP["l_hip"], MP["r_hip"]], 2] = kp[:, [MP["l_hip"], MP["r_hip"]], 2].mean(1, keepdims=True)
+            in_place = True
         hip_axis = smooth(kp[:, MP["l_hip"]] - kp[:, MP["r_hip"]], heading_sigma_s * fps)
         if in_place:                                    # same heading in every frame, keep the tilt
             h = hip_axis[:, :2]
@@ -204,6 +219,11 @@ class G1Retargeter:
         for t in range(T):
             K = {name: kp[t, i] for name, i in MP.items()}
             K["hip_axis"] = hip_axis[t]
+            if upper_body:
+                q, feet, errs[t] = self.solve_frame(K, q_prev, iters=60 if t == 0 else None, upper_body=True)
+                q[:3] = (0.0, 0.0, self.ankle_h - min(feet["l"][2], feet["r"][2]))
+                qpos[t] = q_prev = q
+                continue
             if in_place and t > 0:
                 q, feet, errs[t] = self.solve_frame(K, q_prev, pins=pins)
                 qpos[t] = q_prev = q
@@ -230,7 +250,7 @@ class G1Retargeter:
             q[2] = self.ankle_h - low
             qpos[t] = q
             q_prev = q
-        if not in_place:
+        if not in_place and not upper_body:
             qpos[:, :3] = smooth(qpos[:, :3], 0.08 * fps)   # remove jitter from contact switches
         info = dict(mean_err_cm=100 * errs.mean(), max_err_cm=100 * errs.max(),
                     travel_m=float(np.linalg.norm(qpos[-1, :2] - qpos[0, :2])))
